@@ -2,7 +2,6 @@
 title = "Media Sessions Documentation"
 authors = ["krosov_ok"]
 language = "ru"
-multilingual = true
 src = "src"
 
 [output.html]
@@ -11,12 +10,6 @@ edit-url-template = "https://github.com/krosovok52/media-sessions/edit/main/docs
 site-url = "/media-sessions/"
 default-theme = "light"
 preferred-dark-theme = "coal"
-curly-quotes = true
-mathjax-support = false
-copy-fonts = true
-no-section-label = false
-additional-css = ["theme/custom.css"]
-additional-js = ["theme/custom.js"]
 
 [output.html.fold]
 enable = true
