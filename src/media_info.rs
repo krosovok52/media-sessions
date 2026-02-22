@@ -188,12 +188,14 @@ impl MediaInfo {
     /// Returns the artwork format hint if available.
     #[must_use]
     pub fn artwork_format(&self) -> Option<&'static str> {
-        self.artwork.as_ref().and_then(|data| match data.as_slice() {
-            [0x89, 0x50, 0x4E, 0x47, ..] => Some("PNG"),
-            [0xFF, 0xD8, 0xFF, ..] => Some("JPEG"),
-            [0x47, 0x49, 0x46, 0x38, ..] => Some("GIF"),
-            _ => None,
-        })
+        self.artwork
+            .as_ref()
+            .and_then(|data| match data.as_slice() {
+                [0x89, 0x50, 0x4E, 0x47, ..] => Some("PNG"),
+                [0xFF, 0xD8, 0xFF, ..] => Some("JPEG"),
+                [0x47, 0x49, 0x46, 0x38, ..] => Some("GIF"),
+                _ => None,
+            })
     }
 }
 

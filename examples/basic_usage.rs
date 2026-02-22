@@ -15,7 +15,7 @@
 use std::time::Duration;
 
 use futures::StreamExt;
-use media_sessions::{MediaInfo, MediaSessions, MediaSessionEvent, PlaybackStatus};
+use media_sessions::{MediaInfo, MediaSessionEvent, MediaSessions, PlaybackStatus};
 
 /// Prints media info in a formatted way.
 fn print_media_info(info: &MediaInfo) {
@@ -137,7 +137,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .build()?;
 
     println!("✅ Media sessions initialized");
-    println!("   Platform: {}", std::env::consts::OS);
+    println!("   Platform: {}", media_sessions::current_platform());
 
     // Show current media info
     println!("\n📻 Querying current media session...");

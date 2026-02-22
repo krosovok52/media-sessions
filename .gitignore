@@ -15,6 +15,16 @@ Cargo.lock
 *.rlib
 *.rmeta
 
+# C API build artifacts
+c-api/*.so
+c-api/*.dll
+c-api/*.dylib
+c-api/*.pyc
+c-api/__pycache__/
+c-api/*.csproj.user
+c-api/bin/
+c-api/obj/
+
 # Documentation
 /doc/
 *.mdbook/

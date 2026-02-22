@@ -31,13 +31,18 @@ macos = ["dep:objc2", "dep:objc2-foundation", "dep:core-foundation"]
 linux = ["dep:zbus"]
 tracing = ["dep:tracing"]
 serde = ["dep:serde"]
+c-api = []
+
+[lib]
+name = "media_sessions"
+crate-type = ["lib", "cdylib"]
 
 [dependencies]
 # Error handling
 thiserror = "2.0"
 
 # Async runtime
-tokio = { version = "1.43", features = ["sync", "rt", "time", "macros"] }
+tokio = { version = "1.43", features = ["sync", "rt", "rt-multi-thread", "time", "macros"] }
 futures = "0.3"
 async-trait = "0.1"
 tokio-stream = "0.1"
@@ -82,7 +87,28 @@ harness = false
 [[example]]
 name = "basic_usage"
 path = "examples/basic_usage.rs"
-required-features = ["windows"]
+
+[[example]]
+name = "simple_player"
+path = "examples/simple_player.rs"
+
+[[example]]
+name = "event_watcher"
+path = "examples/event_watcher.rs"
+
+[[example]]
+name = "media_controls"
+path = "examples/media_controls.rs"
+
+[[example]]
+name = "media-sessions-cli"
+path = "examples/media-sessions-cli.rs"
+test = false
+bench = false
+
+[[bin]]
+name = "media-sessions-cli"
+path = "examples/media-sessions-cli.rs"
 
 [lints.rust]
 unexpected_cfgs = { level = "warn", check-cfg = ['cfg(docsrs)'] }

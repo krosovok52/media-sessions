@@ -7,12 +7,12 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use futures::Stream;
-use tokio::sync::{mpsc, RwLock};
+use tokio::sync::{RwLock, mpsc};
 use tokio::time::timeout;
 
 use crate::error::{MediaError, MediaResult};
 use crate::media_info::{MediaInfo, PlaybackStatus};
-use crate::platform::backend::{create_backend, MediaSessionBackend};
+use crate::platform::backend::{MediaSessionBackend, create_backend};
 
 /// Default debounce duration for filtering rapid event spam from OS.
 const DEFAULT_DEBOUNCE_DURATION: Duration = Duration::from_millis(800);
@@ -225,13 +225,13 @@ impl MediaSessionsBuilder {
 }
 
 /// Internal state shared between `MediaSessions` and the event stream.
-struct SharedState {
+pub(crate) struct SharedState {
     backend: Box<dyn MediaSessionBackend>,
     #[allow(dead_code)]
-    debounce_duration: Duration,
-    operation_timeout: Duration,
+    pub(crate) debounce_duration: Duration,
+    pub(crate) operation_timeout: Duration,
     #[allow(dead_code)]
-    enable_artwork: bool,
+    pub(crate) enable_artwork: bool,
 }
 
 /// Main interface for interacting with system media sessions.
@@ -386,20 +386,23 @@ impl MediaSessions {
 
         let result = timeout(timeout_dur, async {
             let state = self.state.read().await;
-            let mut info = state.backend.get_current().await?;
+            let mut info = state.backend.get_current().await.ok().flatten();
 
             // Fetch artwork separately if enabled
-            if enable_artwork && info.artwork.is_none() {
-                info.artwork = state.backend.get_artwork().await.ok().flatten();
+            if enable_artwork {
+                if let Some(ref mut info) = info {
+                    if info.artwork.is_none() {
+                        info.artwork = state.backend.get_artwork().await.ok().flatten();
+                    }
+                }
             }
 
-            Ok::<Option<MediaInfo>, MediaError>(Some(info))
+            info
         })
         .await;
 
         match result {
-            Ok(Ok(info)) => Ok(info),
-            Ok(Err(e)) => Err(e),
+            Ok(media_info) => Ok(media_info),
             Err(_) => Err(MediaError::Timeout(timeout_dur)),
         }
     }
@@ -441,16 +444,15 @@ impl MediaSessions {
     /// # }
     /// ```
     pub async fn watch(&self) -> MediaResult<impl Stream<Item = MediaResult<MediaSessionEvent>>> {
-        let (debounce_dur, tx) = {
-            let state = self.state.read().await;
-            let (tx, _rx) = mpsc::channel(32);
-            (state.debounce_duration, tx)
-        };
-
         let state = self.state.read().await;
+        let (tx, rx) = mpsc::channel(32);
+
+        // Clone backend-related data while holding the lock
+        let debounce_dur = state.debounce_duration;
+
+        // Start listening through the backend
         state.backend.start_listening(tx, debounce_dur).await?;
 
-        let (_tx, rx) = mpsc::channel(32);
         Ok(tokio_stream::wrappers::ReceiverStream::new(rx))
     }
 

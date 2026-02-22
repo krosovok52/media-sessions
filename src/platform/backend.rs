@@ -36,9 +36,9 @@ pub trait MediaSessionBackend: Send + Sync {
     ///
     /// # Errors
     ///
-    /// Returns [`MediaError::NoSession`] if no session is active.
     /// Returns [`MediaError::Backend`] if the query fails.
-    async fn get_current(&self) -> MediaResult<MediaInfo>;
+    /// Returns `Ok(None)` if no session is active.
+    async fn get_current(&self) -> MediaResult<Option<MediaInfo>>;
 
     /// Gets the artwork for the current session.
     ///
@@ -165,21 +165,19 @@ pub fn create_backend() -> MediaResult<Box<dyn MediaSessionBackend>> {
     #[cfg(target_os = "macos")]
     {
         return Ok(Box::new(
-            crate::platform::macos_backend::MacOSBackend::new()?,
+            crate::platform::macos_backend::MacOSBackend::new()?
         ));
     }
 
     #[cfg(target_os = "linux")]
     {
         return Ok(Box::new(
-            crate::platform::linux_backend::LinuxBackend::new()?,
+            crate::platform::linux_backend::LinuxBackend::new()?
         ));
     }
 
     #[allow(unreachable_code)]
-    Err(MediaError::NotSupported(
-        std::env::consts::OS.to_string(),
-    ))
+    Err(MediaError::NotSupported(std::env::consts::OS.to_string()))
 }
 
 /// Helper for debouncing rapid events.

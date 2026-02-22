@@ -105,13 +105,18 @@
 #![warn(missing_docs)]
 #![warn(clippy::pedantic)]
 #![warn(clippy::nursery)]
-#![deny(unsafe_code)]
 #![deny(rustdoc::broken_intra_doc_links)]
+
+// FFI module uses unsafe code by design
+#![cfg_attr(feature = "c-api", allow(unsafe_code))]
 
 pub mod error;
 pub mod media_info;
 pub mod media_sessions;
 pub mod platform;
+
+#[cfg(feature = "c-api")]
+pub mod ffi;
 
 pub use error::{MediaError, MediaResult};
 pub use media_info::{MediaInfo, PlaybackStatus};

@@ -15,7 +15,7 @@
 
 use std::time::{Duration, Instant};
 
-use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
+use criterion::{BenchmarkId, Criterion, Throughput, criterion_group, criterion_main};
 use futures::StreamExt;
 use media_sessions::MediaSessions;
 use tokio::runtime::Runtime;
@@ -104,48 +104,51 @@ fn bench_event_throughput(c: &mut Criterion) {
     group.warm_up_time(Duration::from_secs(5));
     group.throughput(Throughput::Elements(1));
 
-    group.bench_function(BenchmarkId::new("events_per_second", "rapid_changes"), |b| {
-        b.iter_custom(|iters| {
-            let mut total_events = 0u64;
-            let mut total_time = Duration::ZERO;
+    group.bench_function(
+        BenchmarkId::new("events_per_second", "rapid_changes"),
+        |b| {
+            b.iter_custom(|iters| {
+                let mut total_events = 0u64;
+                let mut total_time = Duration::ZERO;
 
-            for _ in 0..iters {
-                let sessions = match MediaSessions::new() {
-                    Ok(s) => s,
-                    Err(_) => continue,
-                };
+                for _ in 0..iters {
+                    let sessions = match MediaSessions::new() {
+                        Ok(s) => s,
+                        Err(_) => continue,
+                    };
 
-                let start = Instant::now();
+                    let start = Instant::now();
 
-                let events = rt.block_on(async {
-                    let mut stream = sessions.watch().await.ok().unwrap();
-                    let mut count = 0u64;
+                    let events = rt.block_on(async {
+                        let mut stream = sessions.watch().await.ok().unwrap();
+                        let mut count = 0u64;
 
-                    loop {
-                        tokio::select! {
-                            event = stream.next() => {
-                                if event.is_some() {
-                                    count += 1;
+                        loop {
+                            tokio::select! {
+                                event = stream.next() => {
+                                    if event.is_some() {
+                                        count += 1;
+                                    }
+                                }
+                                _ = tokio::time::sleep(Duration::from_secs(1)) => {
+                                    break count;
                                 }
                             }
-                            _ = tokio::time::sleep(Duration::from_secs(1)) => {
-                                break count;
-                            }
                         }
-                    }
-                });
+                    });
 
-                total_events += events;
-                total_time += start.elapsed();
-            }
+                    total_events += events;
+                    total_time += start.elapsed();
+                }
 
-            if total_events > 0 {
-                total_time / (total_events as u32)
-            } else {
-                total_time
-            }
-        });
-    });
+                if total_events > 0 {
+                    total_time / (total_events as u32)
+                } else {
+                    total_time
+                }
+            });
+        },
+    );
 
     group.finish();
 }

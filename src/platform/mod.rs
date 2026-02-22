@@ -32,7 +32,7 @@ pub mod linux_backend;
 
 pub mod backend;
 
-pub use backend::{create_backend, MediaSessionBackend};
+pub use backend::{MediaSessionBackend, create_backend};
 
 /// Get the list of available platform backends.
 ///

@@ -5,7 +5,6 @@
 [![License](https://img.shields.io/crates/l/media-sessions.svg)](LICENSE-APACHE)
 [![Build Status](https://github.com/krosovok52/media-sessions/workflows/CI/badge.svg)](https://github.com/krosovok52/media-sessions/actions)
 [![MSRV](https://img.shields.io/badge/MSRV-1.80+-blue.svg)](https://github.com/rust-lang/rust/releases/tag/1.80.0)
-[![Telegram](https://img.shields.io/badge/Telegram-%40krosov__ok-2CA5E0?logo=telegram)](https://t.me/krosov_ok)
 
 **Cross-platform media session control for Rust** — высокопроизводительная библиотека для управления системными медиаплеерами на Windows, macOS и Linux.
 
@@ -18,8 +17,20 @@
 - 📊 **Встроенный debounce** — фильтрация спама событий (800ms по умолчанию)
 - 🖼️ **Поддержка обложек** — сырые байты изображений (PNG/JPEG)
 - 📈 **Бенчмарки** — Criterion.rs с HTML отчётами
+- 🔌 **C API** — использование из Python, C#, Node.js и других языков
 
 ## 📖 Быстрый старт
+
+### 📚 Документация
+
+**Онлайн версия:** https://krosovok52.github.io/media-sessions/
+
+| Документ | Описание |
+|----------|----------|
+| **🚀 [Quick Start](QUICKSTART.md)** | 5-минутное введение |
+| **📖 [Full Documentation (RU)](DOCUMENTATION.md)** | Полная документация на русском |
+| **🔌 [C API Reference](c-api/API_REFERENCE.md)** | Документация по C API |
+| **🌐 [mdBook Docs](docs/)** | Интерактивная документация (RU/EN) |
 
 ### Установка
 
@@ -41,24 +52,24 @@ use futures::StreamExt;
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let sessions = MediaSessions::new()?;
-    
+
     // Получить текущий трек
     if let Some(info) = sessions.current().await? {
         println!("🎵 Играет: {} - {}", info.artist(), info.title());
         println!("💿 Альбом: {}", info.album());
         println!("▶️ Статус: {}", info.playback_status);
     }
-    
+
     // Управление воспроизведением
     sessions.play().await?;
     sessions.seek(std::time::Duration::from_secs(30)).await?;
-    
+
     // Подписаться на события
     let mut stream = sessions.watch().await?;
     while let Some(event) = stream.next().await {
         println!("📡 Событие: {:?}", event?);
     }
-    
+
     Ok(())
 }
 ```
@@ -68,7 +79,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 | Платформа | Бэкенд | Мин. версия | Статус |
 |-----------|--------|-------------|--------|
 | **Windows 10/11** | WinRT `Windows.Media.Control` | 1803+ | ✅ Стабильно |
-| **macOS 12+** | MediaRemote.framework | Monterey | ✅ Стабильно |
+| **macOS 12+** | MediaRemote.framework | Monterey | 🟡 В разработке |
 | **Linux** | D-Bus / MPRIS 2.0 | Любой с D-Bus | ✅ Стабильно |
 
 ### Пример работы
@@ -178,19 +189,19 @@ use media_sessions::MediaSessions;
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let sessions = MediaSessions::new()?;
-    
+
     // Play/Pause
     sessions.play_pause().await?;
-    
+
     // Следующий трек
     sessions.next().await?;
-    
+
     // Перемотка на 1 минуту
     sessions.seek(std::time::Duration::from_secs(60)).await?;
-    
-    // Громкость 50%
+
+    // Громкость 50% (Linux)
     sessions.set_volume(0.5).await?;
-    
+
     Ok(())
 }
 ```
@@ -206,9 +217,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let sessions = MediaSessions::builder()
         .debounce_duration(std::time::Duration::from_millis(500))
         .build()?;
-    
+
     let mut stream = sessions.watch().await?;
-    
+
     while let Some(event) = stream.next().await {
         match event? {
             MediaSessionEvent::MetadataChanged(info) => {
@@ -220,7 +231,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             _ => {}
         }
     }
-    
+
     Ok(())
 }
 ```
@@ -243,15 +254,15 @@ impl MediaMonitor {
             .debounce_duration(std::time::Duration::from_millis(500))
             .operation_timeout(std::time::Duration::from_secs(3))
             .build()?;
-        
+
         let (event_tx, _) = broadcast::channel(100);
-        
+
         Ok(Self { sessions, event_tx })
     }
-    
+
     pub async fn run(&self) -> Result<(), Box<dyn std::error::Error>> {
         let mut stream = self.sessions.watch().await?;
-        
+
         while let Some(event) = stream.next().await {
             match event {
                 Ok(MediaSessionEvent::MetadataChanged(info)) => {
@@ -263,7 +274,7 @@ impl MediaMonitor {
                 _ => {}
             }
         }
-        
+
         Ok(())
     }
 }
@@ -296,6 +307,7 @@ media-sessions = { git = "https://github.com/krosovok52/media-sessions" }
 | `linux` | Только Linux бэкенд | zbus |
 | `tracing` | Tracing логи | tracing |
 | `serde` | Сериализация типов | serde |
+| `c-api` | C FFI для других языков | — |
 
 Пример с селективными фичами:
 
@@ -322,6 +334,27 @@ cargo clippy --all-targets -- -D warnings
 # Форматирование
 cargo fmt --all
 ```
+
+## 🔌 C API
+
+Библиотека предоставляет C API для использования из других языков программирования:
+
+```bash
+# Собрать C API
+cargo build --release --features c-api
+
+# Windows: target/release/media_sessions_c.dll
+# Linux: target/release/libmedia_sessions_c.so
+# macOS: target/release/libmedia_sessions_c.dylib
+```
+
+Примеры использования:
+
+- **Python:** `c-api/python_example.py`
+- **C#:** `c-api/csharp_example.cs`
+- **C/C++:** См. `c-api/media_sessions_c.h`
+
+Полная документация: [`c-api/README.md`](c-api/README.md)
 
 ## 📖 Документация
 

@@ -9,9 +9,10 @@
 //! - MPRIS-compatible media player (Spotify, Firefox, mpv, etc.)
 //! - The `zbus` crate for async D-Bus communication
 
+use std::sync::Arc;
 use std::time::Duration;
 
-use tokio::sync::mpsc;
+use tokio::sync::{RwLock, mpsc};
 
 use super::backend::MediaSessionBackend;
 use crate::error::{MediaError, MediaResult};
@@ -28,28 +29,21 @@ const MPRIS_PATH: &str = "/org/mpris/MediaPlayer2";
 const MPRIS_PLAYER_INTERFACE: &str = "org.mpris.MediaPlayer2.Player";
 
 /// Linux MPRIS backend.
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct LinuxBackend {
-    /// D-Bus connection.
     connection: Option<zbus::Connection>,
-    /// Player name.
-    player_name: Option<String>,
+    player_name: Arc<RwLock<Option<String>>>,
 }
 
 impl LinuxBackend {
     /// Creates a new Linux backend instance.
-    ///
-    /// # Errors
-    ///
-    /// Returns [`MediaError::DBusError`] if D-Bus connection fails.
-    /// Returns [`MediaError::NoSession`] if no MPRIS player is found.
     pub fn new() -> MediaResult<Self> {
         match tokio::runtime::Handle::try_current() {
             Ok(handle) => handle.block_on(Self::new_async()),
             Err(_) => {
                 let rt = tokio::runtime::Runtime::new().map_err(|e| MediaError::Backend {
                     platform: "linux".to_string(),
-                    message: format!("Failed to create runtime: {}", e),
+                    message: format!("Failed to create runtime: {e}"),
                 })?;
                 rt.block_on(Self::new_async())
             }
@@ -58,27 +52,28 @@ impl LinuxBackend {
 
     /// Async constructor.
     async fn new_async() -> MediaResult<Self> {
-        let connection = zbus::Connection::session().await.map_err(|e| {
-            MediaError::DBusError(format!("Failed to connect to session bus: {}", e))
-        })?;
+        let connection = zbus::Connection::session()
+            .await
+            .map_err(|e| MediaError::DBusError(format!("Failed to connect to session bus: {e}")))?;
 
         let player_name = Self::find_player(&connection).await?;
 
         Ok(Self {
             connection: Some(connection),
-            player_name,
+            player_name: Arc::new(RwLock::new(player_name)),
         })
     }
 
     /// Finds an active MPRIS player.
     async fn find_player(connection: &zbus::Connection) -> MediaResult<Option<String>> {
-        let proxy = zbus::fdo::DBusProxy::new(connection).await.map_err(|e| {
-            MediaError::DBusError(format!("Failed to create DBus proxy: {}", e))
-        })?;
+        let proxy = zbus::fdo::DBusProxy::new(connection)
+            .await
+            .map_err(|e| MediaError::DBusError(format!("Failed to create DBus proxy: {e}")))?;
 
-        let names = proxy.list_names().await.map_err(|e| {
-            MediaError::DBusError(format!("Failed to list names: {}", e))
-        })?;
+        let names = proxy
+            .list_names()
+            .await
+            .map_err(|e| MediaError::DBusError(format!("Failed to list names: {e}")))?;
 
         for name in names {
             if name.starts_with(MPRIS_SERVICE_PREFIX) {
@@ -92,16 +87,12 @@ impl LinuxBackend {
     /// Gets the player proxy.
     async fn get_proxy(&self) -> MediaResult<zbus::Proxy<'_>> {
         let connection = self.connection.as_ref().ok_or(MediaError::NoSession)?;
-        let player_name = self.player_name.as_ref().ok_or(MediaError::NoSession)?;
+        let player_guard = self.player_name.read().await;
+        let player_name = player_guard.as_ref().ok_or(MediaError::NoSession)?;
 
-        zbus::Proxy::new(
-            connection,
-            player_name,
-            MPRIS_PATH,
-            MPRIS_PLAYER_INTERFACE,
-        )
-        .await
-        .map_err(|e| MediaError::DBusError(format!("Failed to create proxy: {}", e)))
+        zbus::Proxy::new(connection, player_name, MPRIS_PATH, MPRIS_PLAYER_INTERFACE)
+            .await
+            .map_err(|e| MediaError::DBusError(format!("Failed to create proxy: {e}")))
     }
 
     /// Converts MPRIS playback state.
@@ -113,6 +104,82 @@ impl LinuxBackend {
             _ => PlaybackStatus::Transitioning,
         }
     }
+
+    /// Polls for media session changes and emits events.
+    async fn poll_events(
+        &self,
+        tx: mpsc::Sender<MediaResult<MediaSessionEvent>>,
+        debounce_duration: Duration,
+    ) {
+        let mut last_status: Option<PlaybackStatus> = None;
+        let mut last_title: Option<String> = None;
+        let mut last_emit_time = tokio::time::Instant::now();
+
+        loop {
+            tokio::time::sleep(Duration::from_millis(500)).await;
+
+            if tx.is_closed() {
+                break;
+            }
+
+            // Check for player changes
+            if let Ok(conn) = self.connection.as_ref().ok_or(MediaError::NoSession) {
+                let player = Self::find_player(conn).await.unwrap_or(None);
+                let mut current_player = self.player_name.write().await;
+                if player != *current_player {
+                    *current_player = player.clone();
+                    if player.is_none() && last_status.is_some() {
+                        let _ = tx.send(Ok(MediaSessionEvent::SessionClosed)).await;
+                        last_status = None;
+                        last_title = None;
+                    }
+                }
+            }
+
+            let info = match self.get_current().await {
+                Ok(Some(i)) => i,
+                Ok(None) => {
+                    if last_status.is_some() {
+                        last_status = None;
+                        let _ = tx.send(Ok(MediaSessionEvent::SessionClosed)).await;
+                    }
+                    continue;
+                }
+                Err(e) => {
+                    let _ = tx.send(Err(e)).await;
+                    continue;
+                }
+            };
+
+            // Debounce check
+            let now = tokio::time::Instant::now();
+            if now.duration_since(last_emit_time) < debounce_duration {
+                continue;
+            }
+
+            // Check for metadata changes
+            let title_changed = info.title != last_title;
+            if title_changed {
+                last_title = info.title.clone();
+                let _ = tx
+                    .send(Ok(MediaSessionEvent::MetadataChanged(info.clone())))
+                    .await;
+                last_emit_time = now;
+                continue;
+            }
+
+            // Check for playback status changes
+            if Some(info.playback_status) != last_status {
+                last_status = Some(info.playback_status);
+                let _ = tx
+                    .send(Ok(MediaSessionEvent::PlaybackStatusChanged(
+                        info.playback_status,
+                    )))
+                    .await;
+                last_emit_time = now;
+            }
+        }
+    }
 }
 
 #[async_trait::async_trait]
@@ -121,21 +188,27 @@ impl MediaSessionBackend for LinuxBackend {
         "linux"
     }
 
-    async fn get_current(&self) -> MediaResult<MediaInfo> {
-        let proxy = self.get_proxy().await?;
+    async fn get_current(&self) -> MediaResult<Option<MediaInfo>> {
+        let proxy = match self.get_proxy().await {
+            Ok(p) => p,
+            Err(MediaError::NoSession) => return Ok(None),
+            Err(e) => return Err(e),
+        };
 
-        let metadata: zbus::zvariant::Value<'_> =
-            proxy.get_property("Metadata").await.map_err(|e| {
-                MediaError::DBusError(format!("Failed to get metadata: {}", e))
-            })?;
+        let metadata: zbus::zvariant::Value<'_> = proxy
+            .get_property("Metadata")
+            .await
+            .map_err(|e| MediaError::DBusError(format!("Failed to get metadata: {e}")))?;
 
-        let status: String = proxy.get_property("PlaybackStatus").await.map_err(|e| {
-            MediaError::DBusError(format!("Failed to get status: {}", e))
-        })?;
+        let status: String = proxy
+            .get_property("PlaybackStatus")
+            .await
+            .map_err(|e| MediaError::DBusError(format!("Failed to get status: {e}")))?;
 
-        let position: i64 = proxy.get_property("Position").await.map_err(|e| {
-            MediaError::DBusError(format!("Failed to get position: {}", e))
-        })?;
+        let position: i64 = proxy
+            .get_property("Position")
+            .await
+            .map_err(|e| MediaError::DBusError(format!("Failed to get position: {e}")))?;
 
         let mut info = MediaInfo {
             playback_status: Self::convert_playback_state(&status),
@@ -186,15 +259,18 @@ impl MediaSessionBackend for LinuxBackend {
             }
         }
 
-        Ok(info)
+        Ok(Some(info))
     }
 
     async fn get_artwork(&self) -> MediaResult<Option<Vec<u8>>> {
+        // Artwork would require fetching the artwork URL and downloading it
+        // This is a simplified implementation
         Ok(None)
     }
 
     fn get_active_app(&self) -> MediaResult<Option<String>> {
-        Ok(self.player_name.as_ref().map(|name| {
+        let player_guard = futures::executor::block_on(self.player_name.read());
+        Ok(player_guard.as_ref().map(|name| {
             name.strip_prefix(MPRIS_SERVICE_PREFIX)
                 .unwrap_or(name)
                 .to_string()
@@ -203,44 +279,50 @@ impl MediaSessionBackend for LinuxBackend {
 
     async fn play(&self) -> MediaResult<()> {
         let proxy = self.get_proxy().await?;
-        proxy.call("Play", &()).await.map_err(|e| {
-            MediaError::DBusError(format!("Failed to call Play: {}", e))
-        })
+        proxy
+            .call("Play", &())
+            .await
+            .map_err(|e| MediaError::DBusError(format!("Failed to call Play: {e}")))
     }
 
     async fn pause(&self) -> MediaResult<()> {
         let proxy = self.get_proxy().await?;
-        proxy.call("Pause", &()).await.map_err(|e| {
-            MediaError::DBusError(format!("Failed to call Pause: {}", e))
-        })
+        proxy
+            .call("Pause", &())
+            .await
+            .map_err(|e| MediaError::DBusError(format!("Failed to call Pause: {e}")))
     }
 
     async fn play_pause(&self) -> MediaResult<()> {
         let proxy = self.get_proxy().await?;
-        proxy.call("PlayPause", &()).await.map_err(|e| {
-            MediaError::DBusError(format!("Failed to call PlayPause: {}", e))
-        })
+        proxy
+            .call("PlayPause", &())
+            .await
+            .map_err(|e| MediaError::DBusError(format!("Failed to call PlayPause: {e}")))
     }
 
     async fn stop(&self) -> MediaResult<()> {
         let proxy = self.get_proxy().await?;
-        proxy.call("Stop", &()).await.map_err(|e| {
-            MediaError::DBusError(format!("Failed to call Stop: {}", e))
-        })
+        proxy
+            .call("Stop", &())
+            .await
+            .map_err(|e| MediaError::DBusError(format!("Failed to call Stop: {e}")))
     }
 
     async fn next(&self) -> MediaResult<()> {
         let proxy = self.get_proxy().await?;
-        proxy.call("Next", &()).await.map_err(|e| {
-            MediaError::DBusError(format!("Failed to call Next: {}", e))
-        })
+        proxy
+            .call("Next", &())
+            .await
+            .map_err(|e| MediaError::DBusError(format!("Failed to call Next: {e}")))
     }
 
     async fn previous(&self) -> MediaResult<()> {
         let proxy = self.get_proxy().await?;
-        proxy.call("Previous", &()).await.map_err(|e| {
-            MediaError::DBusError(format!("Failed to call Previous: {}", e))
-        })
+        proxy
+            .call("Previous", &())
+            .await
+            .map_err(|e| MediaError::DBusError(format!("Failed to call Previous: {e}")))
     }
 
     async fn seek(&self, position: Duration) -> MediaResult<()> {
@@ -256,14 +338,15 @@ impl MediaSessionBackend for LinuxBackend {
                 ),
             )
             .await
-            .map_err(|e| MediaError::DBusError(format!("Failed to call SetPosition: {}", e)))
+            .map_err(|e| MediaError::DBusError(format!("Failed to call SetPosition: {e}")))
     }
 
     async fn set_volume(&self, volume: f64) -> MediaResult<()> {
         let proxy = self.get_proxy().await?;
-        proxy.set_property("Volume", &volume).await.map_err(|e| {
-            MediaError::DBusError(format!("Failed to set volume: {}", e))
-        })
+        proxy
+            .set_property("Volume", &volume)
+            .await
+            .map_err(|e| MediaError::DBusError(format!("Failed to set volume: {e}")))
     }
 
     async fn set_repeat_mode(&self, mode: RepeatMode) -> MediaResult<()> {
@@ -273,23 +356,29 @@ impl MediaSessionBackend for LinuxBackend {
             RepeatMode::One => "Track",
             RepeatMode::All => "Playlist",
         };
-        proxy.set_property("LoopStatus", &loop_status).await.map_err(|e| {
-            MediaError::DBusError(format!("Failed to set loop status: {}", e))
-        })
+        proxy
+            .set_property("LoopStatus", &loop_status)
+            .await
+            .map_err(|e| MediaError::DBusError(format!("Failed to set loop status: {e}")))
     }
 
     async fn set_shuffle(&self, enabled: bool) -> MediaResult<()> {
         let proxy = self.get_proxy().await?;
-        proxy.set_property("Shuffle", &enabled).await.map_err(|e| {
-            MediaError::DBusError(format!("Failed to set shuffle: {}", e))
-        })
+        proxy
+            .set_property("Shuffle", &enabled)
+            .await
+            .map_err(|e| MediaError::DBusError(format!("Failed to set shuffle: {e}")))
     }
 
     async fn start_listening(
         &self,
-        _tx: mpsc::Sender<MediaResult<MediaSessionEvent>>,
-        _debounce_duration: Duration,
+        tx: mpsc::Sender<MediaResult<MediaSessionEvent>>,
+        debounce_duration: Duration,
     ) -> MediaResult<()> {
+        let this = self.clone();
+        tokio::spawn(async move {
+            this.poll_events(tx, debounce_duration).await;
+        });
         Ok(())
     }
 }
@@ -318,6 +407,6 @@ mod tests {
     #[ignore]
     fn test_backend_creation() {
         let result = LinuxBackend::new();
-        println!("Linux backend result: {:?}", result);
+        println!("Linux backend result: {result:?}");
     }
 }
