@@ -1,4 +1,4 @@
-# Media Sessions Documentation
+# Документация Media Sessions
 
 - [Главная](README.md)
 - [Введение](introduction.md)
@@ -16,19 +16,19 @@
 
 # C API
 
-- [C API Reference](c-api.md)
+- [Обзор](c-api.md)
 - [Python](languages/python.md)
 - [C#](languages/csharp.md)
 - [C/C++](languages/c-cpp.md)
 - [Node.js](languages/nodejs.md)
 
-# Platforms
+# Платформы
 
 - [Windows](platforms/windows.md)
 - [macOS](platforms/macos.md)
 - [Linux](platforms/linux.md)
 
-# Guides
+# Гайды
 
 - [Обработка ошибок](guides/error-handling.md)
 - [Производительность](guides/performance.md)

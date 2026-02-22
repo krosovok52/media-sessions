@@ -1,79 +1,28 @@
-# Rust
+# Исходный код (приватный)
+/src/
 /target/
-**/target/
-**/*.rs.bk
-*.pdb
+/Cargo.lock
+/tests/
+/benches/
+/examples/
+Cargo.toml
 Cargo.lock
 
-# Build output for release
-*.so
-*.dll
-*.dylib
-*.exe
+# Скомпилированная документация (публичная)
+docs/book/
+docs/output/
 
-# Debug
-*.rlib
-*.rmeta
-
-# C API build artifacts
-c-api/*.so
-c-api/*.dll
-c-api/*.dylib
-c-api/*.pyc
-c-api/__pycache__/
-c-api/*.csproj.user
-c-api/bin/
-c-api/obj/
-
-# Documentation
-/doc/
-*.mdbook/
-
-# IDE
-.idea/
-.vscode/
+# Временные файлы
 *.swp
 *.swo
 *~
 .DS_Store
+Thumbs.db
 
-# RustAnalyzer
-/rust-analyzer/
-
-# Benchmarks
-/criterion/
-
-# Coverage
-*.gcno
-*.gcda
-*.lcov
-*.codecov
-coverage/
-tarpaulin-report.html
-
-# Profiling
-perf.data
-perf.data.old
-flamegraph.svg
-
-# Temporary files
-*.tmp
-*.temp
+# Логи
 *.log
 
-# Environment
-.env
-.env.local
-.env.*.local
-
-# Secrets
-*.pem
-*.key
-*.crt
-secrets/
-
-# Examples with sensitive data
-examples/*.local.rs
-
-# Test artifacts
-tests/fixtures/*.generated
+# IDE
+.idea/
+.vscode/
+*.rs.bk

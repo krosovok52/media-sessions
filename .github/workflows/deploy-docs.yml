@@ -10,8 +10,7 @@ on:
       - main
     paths:
       - 'docs/**'
-      - 'book.toml'
-      - 'book.ru.toml'
+      - 'book.*.toml'
   workflow_dispatch:
 
 permissions:
@@ -45,16 +44,36 @@ jobs:
       - name: Build English documentation
         run: |
           cd docs
+          cp book.en.toml book.toml
           mdbook build -d output/en
 
       - name: Build Russian documentation
         run: |
           cd docs
-          cp book.ru.toml book.toml.ru
-          mv book.toml book.toml.en
-          mv book.toml.ru book.toml
+          cp book.ru.toml book.toml
           mdbook build -d output/ru
-          mv book.toml.en book.toml
+
+      - name: Create main index page
+        run: |
+          cd docs/output
+          cat > index.html << 'EOF'
+          <!DOCTYPE html>
+          <html>
+          <head>
+              <meta charset="UTF-8">
+              <meta http-equiv="refresh" content="0; url=en/index.html">
+              <title>Media Sessions Documentation</title>
+          </head>
+          <body>
+              <h1>Media Sessions Documentation</h1>
+              <p>Redirecting to <a href="en/index.html">English version</a>...</p>
+              <p>Or go to <a href="ru/index.html">Russian version</a></p>
+              <script>
+                  window.location.href = "en/index.html";
+              </script>
+          </body>
+          </html>
+          EOF
 
       - name: Deploy to gh-pages
         uses: JamesIves/github-pages-deploy-action@v4

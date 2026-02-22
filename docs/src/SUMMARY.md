@@ -3,7 +3,7 @@
 - [Home](README.md)
 - [Quick Start](quickstart.md)
 
-# API Reference
+# Rust API
 
 - [MediaSessions](rust-api/media-sessions.md)
 - [MediaInfo](rust-api/media-info.md)
@@ -13,7 +13,7 @@
 
 # C API
 
-- [C API Reference](c-api.md)
+- [Overview](c-api.md)
 - [Python](languages/python.md)
 - [C#](languages/csharp.md)
 - [C/C++](languages/c-cpp.md)
