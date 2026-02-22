@@ -36,10 +36,10 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "coal";
-            window.path_to_searchindex_js = "searchindex-31515e20.js";
+            window.path_to_searchindex_js = "searchindex-8209588c.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-4de62791.js"></script>
+        <script src="toc-62020536.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -178,24 +178,21 @@
 
                 <div id="mdbook-content" class="content">
                     <main>
-                        <h1 id="-russian"><a class="header" href="#-russian">🇷🇺 Russian</a></h1>
-<div style="break-before: page; page-break-before: always;"></div>
-<h1 id="-english"><a class="header" href="#-english">🇬🇧 English</a></h1>
-<div style="break-before: page; page-break-before: always;"></div>
-<h1 id="media-sessions-documentation"><a class="header" href="#media-sessions-documentation">Media Sessions Documentation</a></h1>
+                        <h1 id="media-sessions-documentation"><a class="header" href="#media-sessions-documentation">Media Sessions Documentation</a></h1>
 <blockquote>
 <p>Cross-platform media session control for Rust</p>
 </blockquote>
 <div align="center">
-<p><strong><a href="#-russian">🇷🇺 Русская версия</a></strong>  |  <strong><a href="#media-sessions-documentation">🇬🇧 English</a></strong></p>
+<p><strong><a href="ru/README.html">🇷🇺 Русская версия</a></strong>  |  <strong><a href="README.html">🇬🇧 English</a></strong></p>
 </div>
 
 <hr>
-<h2 id="quick-start"><a class="header" href="#quick-start">Quick Start</a></h2>
+<h2 id="-quick-start"><a class="header" href="#-quick-start">🚀 Quick Start</a></h2>
 <h3 id="installation"><a class="header" href="#installation">Installation</a></h3>
 <pre><code class="language-toml">[dependencies]
 media-sessions = "0.2"
 tokio = { version = "1", features = ["full"] }
+futures = "0.3"
 </code></pre>
 <h3 id="example"><a class="header" href="#example">Example</a></h3>
 <pre class="playground"><code class="language-rust">use media_sessions::MediaSessions;
@@ -203,45 +200,83 @@ tokio = { version = "1", features = ["full"] }
 #[tokio::main]
 async fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; {
     let sessions = MediaSessions::new()?;
-    
+
     if let Some(info) = sessions.current().await? {
         println!("🎵 {} - {}", info.artist(), info.title());
+        println!("💿 {}", info.album());
     }
-    
+
     sessions.play().await?;
-    
+
     Ok(())
 }</code></pre>
 <hr>
-<h2 id="documentation"><a class="header" href="#documentation">Documentation</a></h2>
-<h3 id="api-reference"><a class="header" href="#api-reference">API Reference</a></h3>
-<ul>
-<li><strong><a href="#mediasessions">MediaSessions</a></strong> — Main control class</li>
-<li><strong><a href="#mediainfo">MediaInfo</a></strong> — Track metadata</li>
-<li><strong><a href="#playbackstatus">PlaybackStatus</a></strong> — Status enum</li>
-<li><strong><a href="#events">Events</a></strong> — Event streaming</li>
-</ul>
+<h2 id="-documentation-sections"><a class="header" href="#-documentation-sections">📚 Documentation Sections</a></h2>
+<h3 id="rust-api"><a class="header" href="#rust-api">Rust API</a></h3>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Type</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><strong><a href="#mediasessions">MediaSessions</a></strong></td><td>Main control class</td></tr>
+<tr><td><strong><a href="#mediainfo">MediaInfo</a></strong></td><td>Track metadata</td></tr>
+<tr><td><strong><a href="#playbackstatus">PlaybackStatus</a></strong></td><td>Playing, Paused, Stopped</td></tr>
+<tr><td><strong><a href="#repeatmode">RepeatMode</a></strong></td><td>Repeat modes</td></tr>
+<tr><td><strong><a href="#events">Events</a></strong></td><td>Event streaming</td></tr>
+</tbody>
+</table>
+</div>
 <h3 id="c-api-ffi"><a class="header" href="#c-api-ffi">C API (FFI)</a></h3>
-<ul>
-<li><strong><a href="#c-api-reference">C API Reference</a></strong> — Use from other languages</li>
-<li><strong><a href="#python">Python</a></strong> — ctypes binding</li>
-<li><strong><a href="#c-net">C# (.NET)</a></strong> — P/Invoke</li>
-<li><strong><a href="#cc">C/C++</a></strong> — Native API</li>
-</ul>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Language</th><th>Guide</th></tr>
+</thead>
+<tbody>
+<tr><td><strong><a href="#c-api-reference">C API</a></strong></td><td>Reference</td></tr>
+<tr><td><strong><a href="#python">Python</a></strong></td><td>ctypes binding</td></tr>
+<tr><td><strong><a href="#c-net">C#</a></strong></td><td>P/Invoke</td></tr>
+<tr><td><strong><a href="#cc">C/C++</a></strong></td><td>Native API</td></tr>
+<tr><td><strong><a href="#nodejs">Node.js</a></strong></td><td>ffi-napi</td></tr>
+</tbody>
+</table>
+</div>
 <h3 id="platforms"><a class="header" href="#platforms">Platforms</a></h3>
-<ul>
-<li><strong><a href="#windows">Windows</a></strong> — SMTC API ✅</li>
-<li><strong><a href="#macos">macOS</a></strong> — MediaRemote ⚠️</li>
-<li><strong><a href="#linux">Linux</a></strong> — MPRIS ✅</li>
-</ul>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Platform</th><th>Backend</th><th>Status</th></tr>
+</thead>
+<tbody>
+<tr><td><strong><a href="#windows">Windows</a></strong></td><td>SMTC</td><td>✅ Stable</td></tr>
+<tr><td><strong><a href="#macos">macOS</a></strong></td><td>MediaRemote</td><td>🟡 Beta</td></tr>
+<tr><td><strong><a href="#linux">Linux</a></strong></td><td>MPRIS</td><td>✅ Stable</td></tr>
+</tbody>
+</table>
+</div>
 <h3 id="guides"><a class="header" href="#guides">Guides</a></h3>
 <ul>
-<li><strong><a href="#error-handling">Error Handling</a></strong></li>
-<li><strong><a href="#performance">Performance</a></strong></li>
-<li><strong><a href="#faq">FAQ</a></strong></li>
+<li><strong><a href="#error-handling">Error Handling</a></strong> — Pattern matching, logging, retry</li>
+<li><strong><a href="#performance">Performance</a></strong> — Benchmarks, optimization</li>
+<li><strong><a href="#integration">Integration</a></strong> — Web servers, desktop apps</li>
+<li><strong><a href="#troubleshooting">Troubleshooting</a></strong> — Common issues</li>
 </ul>
 <hr>
-<h2 id="resources"><a class="header" href="#resources">Resources</a></h2>
+<h2 id="-benchmarks"><a class="header" href="#-benchmarks">📊 Benchmarks</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Operation</th><th>media-sessions</th><th>playerctl</th></tr>
+</thead>
+<tbody>
+<tr><td><code>current()</code></td><td><strong>~350 ns</strong></td><td>~2.3 ms</td></tr>
+<tr><td>Event throughput</td><td><strong>~850/sec</strong></td><td>~100/sec</td></tr>
+</tbody>
+</table>
+</div>
+<hr>
+<h2 id="-resources"><a class="header" href="#-resources">🔗 Resources</a></h2>
 <ul>
 <li><strong>GitHub:</strong> https://github.com/krosovok52/media-sessions</li>
 <li><strong>Crates.io:</strong> https://crates.io/crates/media-sessions</li>
@@ -253,7 +288,7 @@ async fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; {
 </div>
 
 <div style="break-before: page; page-break-before: always;"></div>
-<h1 id="quick-start-1"><a class="header" href="#quick-start-1">Quick Start</a></h1>
+<h1 id="quick-start"><a class="header" href="#quick-start">Quick Start</a></h1>
 <p>5-minute guide to get started with Media Sessions.</p>
 <hr>
 <h2 id="1-installation-1-minute"><a class="header" href="#1-installation-1-minute">1. Installation (1 minute)</a></h2>

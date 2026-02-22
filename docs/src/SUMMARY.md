@@ -1,16 +1,6 @@
 # Media Sessions Documentation
 
-<div align="center">
-
-[🇷🇺 Русская версия](ru/index.html) &nbsp;|&nbsp; [🇬🇧 English](index.html)
-
-</div>
-
----
-
-## Introduction
-
-- [Home](index.md)
+- [Home](README.md)
 - [Quick Start](quickstart.md)
 
 # API Reference
