@@ -1,0 +1,25 @@
+[book]
+title = "Media Sessions Documentation (RU)"
+authors = ["krosov_ok"]
+language = "ru"
+src = "ru"
+
+[output.html]
+git-repository-url = "https://github.com/krosovok52/media-sessions"
+edit-url-template = "https://github.com/krosovok52/media-sessions/edit/main/docs/src/ru/{path}"
+site-url = "/media-sessions/ru/"
+default-theme = "light"
+preferred-dark-theme = "coal"
+
+[output.html.fold]
+enable = true
+level = 1
+
+[output.html.playground]
+editable = false
+
+[output.html.print]
+enable = true
+
+[output.html.search]
+enable = true

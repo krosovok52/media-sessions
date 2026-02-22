@@ -1,16 +1,6 @@
 # Documentation deployment workflow
 #
-# This workflow builds and deploys documentation to GitHub Pages.
-#
-# Setup:
-# 1. Go to Settings → Pages
-# 2. Select "Deploy from a branch"  
-# 3. Select branch "gh-pages" and folder "/ (root)"
-# 4. Save
-#
-# Triggered by:
-# - Push to main branch (docs changes)
-# - Manual trigger from Actions tab
+# Builds and deploys English and Russian documentation to GitHub Pages.
 
 name: Deploy Documentation
 
@@ -21,6 +11,7 @@ on:
     paths:
       - 'docs/**'
       - 'book.toml'
+      - 'book.ru.toml'
   workflow_dispatch:
 
 permissions:
@@ -48,15 +39,27 @@ jobs:
           chmod +x mdbook
           sudo mv mdbook /usr/local/bin/
 
-      - name: Build documentation
+      - name: Create output directory
+        run: mkdir -p docs/output
+
+      - name: Build English documentation
         run: |
           cd docs
-          mdbook build
+          mdbook build -d output/en
+
+      - name: Build Russian documentation
+        run: |
+          cd docs
+          cp book.ru.toml book.toml.ru
+          mv book.toml book.toml.en
+          mv book.toml.ru book.toml
+          mdbook build -d output/ru
+          mv book.toml.en book.toml
 
       - name: Deploy to gh-pages
         uses: JamesIves/github-pages-deploy-action@v4
         with:
-          folder: docs/book
+          folder: docs/output
           branch: gh-pages
           clean: true
           force: true
