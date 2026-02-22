@@ -1,0 +1,69 @@
+# Rust
+/target/
+**/target/
+**/*.rs.bk
+*.pdb
+Cargo.lock
+
+# Build output for release
+*.so
+*.dll
+*.dylib
+*.exe
+
+# Debug
+*.rlib
+*.rmeta
+
+# Documentation
+/doc/
+*.mdbook/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# RustAnalyzer
+/rust-analyzer/
+
+# Benchmarks
+/criterion/
+
+# Coverage
+*.gcno
+*.gcda
+*.lcov
+*.codecov
+coverage/
+tarpaulin-report.html
+
+# Profiling
+perf.data
+perf.data.old
+flamegraph.svg
+
+# Temporary files
+*.tmp
+*.temp
+*.log
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Secrets
+*.pem
+*.key
+*.crt
+secrets/
+
+# Examples with sensitive data
+examples/*.local.rs
+
+# Test artifacts
+tests/fixtures/*.generated

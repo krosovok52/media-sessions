@@ -1,0 +1,94 @@
+[package]
+name = "media-sessions"
+version = "0.2.0"
+edition = "2021"
+rust-version = "1.80"
+authors = ["krosov_ok <https://t.me/krosov_ok>"]
+license = "MIT OR Apache-2.0"
+keywords = ["media", "mpris", "windows", "macos", "playback"]
+categories = ["multimedia", "api-bindings", "os"]
+description = "Cross-platform media session control with native OS integration (Windows SMTC, macOS MediaRemote, Linux MPRIS)"
+repository = "https://github.com/krosovok52/media-sessions"
+documentation = "https://docs.rs/media-sessions"
+readme = "README.md"
+exclude = [".github/", "benches/", "tests/"]
+homepage = "https://github.com/krosovok52/media-sessions"
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
+targets = [
+    "x86_64-pc-windows-msvc",
+    "x86_64-apple-darwin",
+    "x86_64-unknown-linux-gnu",
+]
+
+[features]
+default = ["windows"]
+all-platforms = ["windows"]
+windows = ["dep:windows", "dep:windows-core"]
+macos = ["dep:objc2", "dep:objc2-foundation", "dep:core-foundation"]
+linux = ["dep:zbus"]
+tracing = ["dep:tracing"]
+serde = ["dep:serde"]
+
+[dependencies]
+# Error handling
+thiserror = "2.0"
+
+# Async runtime
+tokio = { version = "1.43", features = ["sync", "rt", "time", "macros"] }
+futures = "0.3"
+async-trait = "0.1"
+tokio-stream = "0.1"
+
+# Platform dependencies
+windows = { version = "0.58", features = [
+    "Win32_Foundation",
+    "Win32_System_Com",
+    "Win32_System_Variant",
+    "Foundation",
+    "Foundation_Collections",
+    "Storage_Streams",
+    "Media_Control",
+], optional = true }
+windows-core = { version = "0.58", optional = true }
+
+objc2 = { version = "0.5", optional = true }
+objc2-foundation = { version = "0.2", features = ["NSString", "NSDictionary", "NSDate", "NSArray"], optional = true }
+core-foundation = { version = "0.10", optional = true }
+
+zbus = { version = "4", optional = true }
+
+# Optional tracing
+tracing = { version = "0.1", optional = true }
+
+# Optional serialization
+serde = { version = "1.0", features = ["derive"], optional = true }
+
+# Image handling for artwork
+image = { version = "0.25", default-features = false, features = ["png", "jpeg"] }
+
+[dev-dependencies]
+criterion = { version = "0.5", features = ["html_reports", "async_tokio"] }
+tokio = { version = "1.43", features = ["full"] }
+tempfile = "3"
+libc = "0.2"
+
+[[bench]]
+name = "media_sessions"
+harness = false
+
+[[example]]
+name = "basic_usage"
+path = "examples/basic_usage.rs"
+required-features = ["windows"]
+
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(docsrs)'] }
+
+[profile.release]
+lto = true
+codegen-units = 1
+opt-level = 3
+strip = true
