@@ -1,81 +1,43 @@
 # Media Sessions Documentation
 
-**Media Sessions** — cross-platform библиотека для управления медиа-сессиями на Windows, macOS и Linux.
+[🇷🇺 Russian](ru/index.html) | [🇬🇧 English](index.html)
 
----
+- [Home](index.md)
+- [Quick Start](quickstart.md)
 
-## 📚 Выбор языка / Language
+# Rust API
 
-- **[🇷🇺 Русская версия](ru/)** — полная документация на русском
-- **[🇬🇧 English version](en/)** — full documentation in English
+- [MediaSessions](rust-api/media-sessions.md)
+- [MediaInfo](rust-api/media-info.md)
+- [PlaybackStatus](rust-api/playback-status.md)
+- [Events](rust-api/events.md)
 
----
+# C API
 
-## 🚀 Быстрый старт
+- [C API Reference](c-api.md)
 
-Хотите сразу начать? Перейдите к [Quick Start Guide](ru/quickstart.md).
+# Languages
 
----
+- [Python](languages/python.md)
+- [C# (.NET)](languages/csharp.md)
+- [C/C++](languages/c-cpp.md)
+- [Node.js](languages/nodejs.md)
 
-## 📖 Содержание
+# Platforms
 
-### Для начинающих
+- [Windows](platforms/windows.md)
+- [macOS](platforms/macos.md)
+- [Linux](platforms/linux.md)
 
-- [Quick Start (5 мин)](ru/quickstart.md) — быстрое введение
-- [Что такое Media Sessions?](ru/introduction.md) — обзор проекта
-- [Установка](ru/installation.md) — как установить и настроить
+# Guides
 
-### Для разработчиков
+- [Error Handling](guides/error-handling.md)
+- [Performance](guides/performance.md)
+- [Integration](guides/integration.md)
+- [Testing](guides/testing.md)
+- [Debugging](guides/debugging.md)
 
-- [Rust API](ru/rust-api/) — полное описание API
-  - [MediaSessions](ru/rust-api/media-sessions.md)
-  - [MediaInfo](ru/rust-api/media-info.md)
-  - [События](ru/rust-api/events.md)
-- [C API](ru/c-api.md) — FFI для других языков
-- [Примеры](ru/examples.md) — код для копирования
+# Reference
 
-### Интеграция
-
-- [Python](ru/languages/python.md) — ctypes binding
-- [C# (.NET)](ru/languages/csharp.md) — P/Invoke
-- [C/C++](ru/languages/c-cpp.md) — нативный API
-- [Node.js](ru/languages/nodejs.md) — ffi-napi
-
-### Платформы
-
-- [Windows](ru/platforms/windows.md) — SMTC API
-- [macOS](ru/platforms/macos.md) — MediaRemote
-- [Linux](ru/platforms/linux.md) — MPRIS/D-Bus
-
-### Справка
-
-- [Обработка ошибок](ru/guides/error-handling.md)
-- [Производительность](ru/guides/performance.md)
-- [FAQ](ru/faq.md) — частые вопросы
-
----
-
-## 📦 Исходный код
-
-- **GitHub:** https://github.com/krosovok52/media-sessions
-- **Crates.io:** https://crates.io/crates/media-sessions
-- **Docs.rs:** https://docs.rs/media-sessions
-
----
-
-## 📬 Контакты
-
-- **Автор:** krosov_ok
-- **Telegram:** [@krosov_ok](https://t.me/krosov_ok)
-- **Канал:** [@programsKrosovok](https://t.me/programsKrosovok)
-
----
-
-## 📄 Лицензия
-
-MIT OR Apache-2.0
-
----
-
-**Версия документации:** 0.2.0  
-**Последнее обновление:** Февраль 2026
+- [FAQ](faq.md)
+- [Troubleshooting](troubleshooting.md)

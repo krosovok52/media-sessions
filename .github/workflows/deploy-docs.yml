@@ -1,16 +1,17 @@
 # Documentation deployment workflow
 #
-# This workflow builds and deploys the documentation to GitHub Pages.
+# This workflow builds and deploys ONLY documentation to GitHub Pages.
+# Source code remains in main branch, only static HTML is deployed.
+#
+# BEFORE RUNNING:
+# 1. Go to Settings → Pages
+# 2. Select "Deploy from a branch"
+# 3. Select branch "gh-pages" and folder "/ (root)"
+# 4. Save
 #
 # Triggered by:
 # - Push to main branch (docs changes)
 # - Manual trigger from Actions tab
-#
-# To use:
-# 1. Go to Settings → Pages
-# 2. Set Source to "Deploy from a branch"
-# 3. Select branch "gh-pages" and folder "/ (root)"
-# 4. Save
 
 name: Deploy Documentation
 
@@ -62,32 +63,44 @@ jobs:
           chmod +x mdbook
           sudo mv mdbook /usr/local/bin/
       
-      - name: Setup Pages
-        id: pages
-        uses: actions/configure-pages@v4
-      
       - name: Build with mdBook
         run: |
           cd docs
           mdbook build
-        env:
-          MDBOOK_OUTPUT__HTML__SITE_URL: ${{ steps.pages.outputs.base_path }}
       
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
+          name: documentation
           path: ./docs/book
+          retention-days: 7
 
   # Deploy job
   deploy:
     if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    needs: build
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    needs: build
     
     steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: documentation
+          path: ./docs/book
+      
+      - name: Setup Pages
+        id: pages
+        uses: actions/configure-pages@v4
+        continue-on-error: true
+      
+      - name: Upload to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./docs/book
+          publish_branch: gh-pages
+          force_orphan: true
+          keep_files: false

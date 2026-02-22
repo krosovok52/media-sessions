@@ -1,0 +1,26 @@
+# Workflow to enable GitHub Pages
+# Run this once to enable Pages, then use deploy-docs.yml
+
+name: Enable GitHub Pages
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  enable:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Enable GitHub Pages
+        run: |
+          echo "Please enable GitHub Pages manually:"
+          echo "1. Go to Settings > Pages"
+          echo "2. Select 'Deploy from a branch'"
+          echo "3. Select branch: main, folder: / (root)"
+          echo "4. Click Save"
+          echo ""
+          echo "Then run deploy-docs.yml workflow"

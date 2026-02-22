@@ -1,22 +1,22 @@
 [book]
 title = "Media Sessions Documentation"
 authors = ["krosov_ok"]
-language = "ru"
-multilingual = true
+language = "en"
+multilingual = false
 src = "src"
 
 [output.html]
 git-repository-url = "https://github.com/krosovok52/media-sessions"
 edit-url-template = "https://github.com/krosovok52/media-sessions/edit/main/docs/{path}"
 site-url = "/media-sessions/"
-default-theme = "navy"
-preferred-dark-theme = "navy"
+default-theme = "light"
+preferred-dark-theme = "coal"
 curly-quotes = true
 mathjax-support = false
 copy-fonts = true
 no-section-label = false
-additional-css = ["custom.css"]
-additional-js = ["custom.js"]
+additional-css = ["theme/custom.css"]
+additional-js = ["theme/custom.js"]
 
 [output.html.fold]
 enable = true
@@ -41,10 +41,8 @@ expand = true
 heading-split-level = 3
 
 [output.html.redirect]
-"/examples/index.html" = "examples/basic_usage.html"
+"/index.html" = "index.html"
 
 [preprocessor.links]
 
 [preprocessor.index]
-
-[preprocessor.alerts]
