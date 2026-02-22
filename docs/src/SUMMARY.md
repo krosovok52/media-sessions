@@ -1,25 +1,31 @@
 # Media Sessions Documentation
 
-[🇷🇺 Russian](ru/index.html) | [🇬🇧 English](index.html)
+<div align="center">
+
+[🇷🇺 Русская версия](ru/index.html) &nbsp;|&nbsp; [🇬🇧 English](index.html)
+
+</div>
+
+---
+
+## Introduction
 
 - [Home](index.md)
 - [Quick Start](quickstart.md)
 
-# Rust API
+# API Reference
 
 - [MediaSessions](rust-api/media-sessions.md)
 - [MediaInfo](rust-api/media-info.md)
 - [PlaybackStatus](rust-api/playback-status.md)
+- [RepeatMode](rust-api/repeat-mode.md)
 - [Events](rust-api/events.md)
 
 # C API
 
 - [C API Reference](c-api.md)
-
-# Languages
-
 - [Python](languages/python.md)
-- [C# (.NET)](languages/csharp.md)
+- [C#](languages/csharp.md)
 - [C/C++](languages/c-cpp.md)
 - [Node.js](languages/nodejs.md)
 
@@ -34,10 +40,8 @@
 - [Error Handling](guides/error-handling.md)
 - [Performance](guides/performance.md)
 - [Integration](guides/integration.md)
-- [Testing](guides/testing.md)
-- [Debugging](guides/debugging.md)
+- [Troubleshooting](guides/troubleshooting.md)
 
-# Reference
+# FAQ
 
 - [FAQ](faq.md)
-- [Troubleshooting](troubleshooting.md)
